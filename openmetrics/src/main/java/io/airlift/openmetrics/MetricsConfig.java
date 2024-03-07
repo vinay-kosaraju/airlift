@@ -13,6 +13,7 @@
  */
 package io.airlift.openmetrics;
 
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import io.airlift.configuration.Config;
 import io.airlift.configuration.ConfigDescription;
@@ -32,12 +33,12 @@ public class MetricsConfig
     }
 
     @Config("openmetrics.jmx-object-names")
-    @ConfigDescription("JMX object names to include when retrieving all metrics.")
-    public MetricsConfig setJmxObjectNames(List<String> jmxObjectNames)
+    @ConfigDescription("Pipe delimited JMX object names to include when retrieving all metrics.")
+    public MetricsConfig setJmxObjectNames(String jmxObjectNames)
     {
         ImmutableList.Builder<ObjectName> objectNames = ImmutableList.builder();
 
-        for (String jmxObjectName : jmxObjectNames) {
+        for (String jmxObjectName : Splitter.on("|").omitEmptyStrings().split(jmxObjectNames)) {
             try {
                 objectNames.add(new ObjectName(jmxObjectName));
             }

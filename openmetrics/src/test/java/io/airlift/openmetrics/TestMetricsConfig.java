@@ -13,12 +13,17 @@
  */
 package io.airlift.openmetrics;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.airlift.configuration.testing.ConfigAssertions;
 import org.testng.annotations.Test;
 
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+
+import java.util.List;
 import java.util.Map;
+
+import static org.testng.Assert.assertEquals;
 
 public class TestMetricsConfig
 {
@@ -26,19 +31,29 @@ public class TestMetricsConfig
     public void testDefaults()
     {
         ConfigAssertions.assertRecordedDefaults(ConfigAssertions.recordDefaults(MetricsConfig.class)
-                .setJmxObjectNames(ImmutableList.of()));
+                .setJmxObjectNames(""));
     }
 
     @Test
     public void testExplicitPropertyMappings()
     {
         Map<String, String> properties = new ImmutableMap.Builder<String, String>()
-                .put("openmetrics.jmx-object-names", "foo.bar:*,baz.bar:*")
+                .put("openmetrics.jmx-object-names", "foo.bar:name=baz,type=qux|baz.bar:*")
                 .build();
 
         MetricsConfig expected = new MetricsConfig()
-                .setJmxObjectNames(ImmutableList.of("foo.bar:*", "baz.bar:*"));
+                .setJmxObjectNames("foo.bar:name=baz,type=qux|baz.bar:*");
 
         ConfigAssertions.assertFullMapping(properties, expected);
+    }
+
+    @Test
+    public void testJmxObjectNames()
+            throws MalformedObjectNameException
+    {
+        MetricsConfig metricsConfig = new MetricsConfig()
+                .setJmxObjectNames("foo.bar:name=baz,type=qux|baz.bar:*");
+
+        assertEquals(metricsConfig.getJmxObjectNames(), List.of(new ObjectName("foo.bar:name=baz,type=qux"), new ObjectName("baz.bar:*")));
     }
 }
